@@ -22,10 +22,13 @@ References:
 */
 
 var fs = require('fs');
+var rest = require('restler');
+var http = require('http');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var URL_DEFAULT = "http://radiant-tor-3322.herokuapp.com/";
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -55,6 +58,34 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
+var getURL = function(url){
+  rest.get(url).on('complete', function(result) {
+	console.log(result);
+    if (result instanceof Error) {
+    } else {
+      fs.writeFile("index2.html", result.toString("utf-8"), function(err) {
+    	if(err) {
+        	console.log(err);
+    	} else {
+        	console.log("The file was saved!");
+		return result.toString("utf-8");
+    	}
+    });
+   }
+});
+};
+
+var getURL2 = function(url){
+var client = http.request(url);
+//request = client.request();
+request.on('response', function( res ) {
+    res.on('data', function( data ) {
+        return data.toString();
+    } );
+} );
+request.end();
+}
+
 var clone = function(fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
@@ -65,8 +96,12 @@ if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-u, --url <url>', 'url to index.html')
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
+    console.log(program.url)
+    var fileFromURL = getURL2(program.url)
+    console.log(fileFromURL);
+    var checkJson = checkHtmlFile("index2.html", program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
